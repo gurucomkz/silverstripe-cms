@@ -7,6 +7,7 @@ use SilverStripe\CMS\Controllers\ModelAsController;
 use SilverStripe\CMS\Model\RedirectorPage;
 use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\CMS\Model\VirtualPage;
+use SilverStripe\Control\ContentNegotiator;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\FunctionalTest;
 use SilverStripe\ORM\DataObject;
@@ -91,6 +92,22 @@ class VirtualPageTest extends FunctionalTest
         $this->assertEquals("New menutitle", $vp2->MenuTitle);
         $this->assertEquals("<p>New content</p>", $vp1->Content);
         $this->assertEquals("<p>New content</p>", $vp2->Content);
+    }
+
+    public function testMetaTags()
+    {
+        $this->logInWithPermission('ADMIN');
+        $master = $this->objFromFixture('Page', 'master');
+        $vp1 = $this->objFromFixture(VirtualPage::class, 'vp1');
+
+        // Test with title
+        $meta = $vp1->MetaTags();
+        $charset = Config::inst()->get(ContentNegotiator::class, 'encoding');
+        $this->assertStringContainsString('<meta http-equiv="Content-Type" content="text/html; charset='.$charset.'"', $meta);
+        $this->assertStringContainsString('<link rel="canonical" href="'.$master->AbsoluteLink().'"', $meta);
+        $this->assertStringContainsString('<meta name="x-page-id" content="'.$vp1->ID.'"', $meta);
+        $this->assertStringContainsString('<meta name="x-cms-edit-link" content="'.$vp1->CMSEditLink().'"', $meta);
+        $this->assertStringContainsString('<title>'.$master->Title.'</title>', $meta);
     }
 
     /**
